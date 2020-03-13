@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "tarjan.h"
 
 using namespace std;
 
@@ -11,6 +12,7 @@ typedef struct vertice{
 } vertice;
 
 vertice** vertice_array;
+int graphSize;
 
 vertice* get_vertice(int index){
     return vertice_array[index-1];
@@ -45,6 +47,7 @@ void processInput(string file_name){
         sscanf(line.c_str(), "%d,%d", &first, &second);
         
         vertice_array = (vertice **)malloc(sizeof(vertice*) * first);
+        graphSize = first;
 
         for(i = 0; i < first; i++){
             getline(myfile, line);
@@ -68,5 +71,6 @@ void processInput(string file_name){
 
 int main(){
     processInput("teste.txt");
+    tarjan(vertice_array, graphSize);
     return 0;
 }
