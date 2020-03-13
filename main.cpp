@@ -7,7 +7,7 @@ using namespace std;
 typedef struct vertice{
     int val;
     int num_connected;
-    vertice** connected;
+    int* connected;
 } vertice;
 
 vertice** vertice_array;
@@ -22,13 +22,13 @@ void new_vertice(int value, int size, int index){
     new_vert = (vertice*)malloc(sizeof(vertice));
     new_vert->val = value;
     new_vert->num_connected = 0;
-    new_vert->connected = (vertice**)malloc(sizeof(vertice*) * size);
+    new_vert->connected = (int*)malloc(sizeof(int) * size);
 
     vertice_array[index] = new_vert;
 
 }
 
-void add_connection(int index, vertice* new_connection){
+void add_connection(int index, int new_connection){
     vertice* aux_vert = get_vertice(index);
     aux_vert->connected[aux_vert->num_connected++] = new_connection;
 }
@@ -57,9 +57,9 @@ void processInput(string file_name){
             getline(myfile, line);
             sscanf(line.c_str(), "%d %d", &aux1, &aux2);
 
-            add_connection(aux1, get_vertice(aux2));
+            add_connection(aux1, aux2);
         }
-
+      
         myfile.close();
     }
 
