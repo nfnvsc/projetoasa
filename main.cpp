@@ -1,10 +1,44 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <list>
 #include <iostream>
 #include <bits/stdc++.h>
 #define NIL -1
+
 using namespace std;
+
+class Graph{
+    int v;
+    list<int> *adjList;
+    list<int> vertList;
+
+    public:
+        Graph(int v);
+        void addVertex(int val);
+        void addConnection(int x, int y);
+        void printGraph();
+};
+
+Graph::Graph(int v){
+    this->v = v;
+    adjList = new list<int>[v];
+}
+
+void Graph::addVertex(int val){
+    vertList.push_back(val);
+}
+
+void Graph::addConnection(int x, int y){
+    adjList[x].push_back(y); 
+}
+
+void Graph::printGraph(){
+    cout << v << "\n";
+    for(int i = 0; i<v; i++)
+        for (list<int>::iterator it = adjList[i].begin(); it != adjList[i].end(); it++)
+            cout << i + 1 << " + " << *it << "\n";
+}
 
 typedef struct vertice {
     int val;
@@ -12,63 +46,44 @@ typedef struct vertice {
     int *connected;
 } vertice;
 
-vertice** vertice_array;
 int graphSize;
-
-vertice* get_vertice(int index){
-    return vertice_array[index-1];
-}
 
 int min(int a, int b) {
     return a < b ? a : b;
 }
 
-void new_vertice(int value, int size, int index){
-    vertice* new_vert;
-
-    new_vert = (vertice*)malloc(sizeof(vertice));
-    new_vert->val = value;
-    new_vert->num_connected = 0;
-    new_vert->connected = (int*)malloc(sizeof(int) * size);
-
-    vertice_array[index] = new_vert;
-
-}
-
-void add_connection(int index, int new_connection){
-    vertice* aux_vert = get_vertice(index);
-    aux_vert->connected[aux_vert->num_connected++] = new_connection;
-}
-
 void processInput(string file_name){
     string line;
     ifstream myfile(file_name);
-
-    int first, second;
+    int *vertexValues;
+    int second;
     int i, aux1, aux2;
 
     if (myfile.is_open()){
         getline(myfile,line);
-        sscanf(line.c_str(), "%d,%d", &first, &second);
+        sscanf(line.c_str(), "%d,%d", &graphSize, &second);
         
-        vertice_array = (vertice **)malloc(sizeof(vertice*) * first);
-        graphSize = first;
+        vertexValues = new int[graphSize];
+        Graph graph(graphSize);
 
-        for(i = 0; i < first; i++){
+        for(i = 0; i < graphSize; i++){
             getline(myfile, line);
             sscanf(line.c_str(), "%d", &aux1);
 
-            new_vertice(aux1, first, i);
+            graph.addVertex(aux1);
         }
 
         for(i = 0; i < second; i++){
             getline(myfile, line);
             sscanf(line.c_str(), "%d %d", &aux1, &aux2);
 
-            add_connection(aux1, aux2);
+            graph.addConnection(aux1-1, aux2);
         }
       
         myfile.close();
+        cout << "Printing\n";
+        graph.printGraph();
+
     }
 
     else cout << "Unable to open file"; 
@@ -84,15 +99,12 @@ void printGraph(vertice **graph, int graphSize) {
 void giveValues(vertice **scc, int num_nodes)
 {
     int maxValue = 0;
-    for (int i = 0; i < num_nodes; i++) {
+    for (int i = 0; i < num_nodes; i++) 
         if (scc[i]->val > maxValue)
-        {
             maxValue = scc[i]->val;
-        }
-    }
-    for (int i = 0; i < num_nodes; i++) {
+
+    for (int i = 0; i < num_nodes; i++)
         scc[i]->val = maxValue;
-    }
 }
 
 void tarjanSCC(int vertex, int disc[], int low[], stack<int> &stack, bool inStack[], vertice **graph) {
@@ -115,7 +127,8 @@ void tarjanSCC(int vertex, int disc[], int low[], stack<int> &stack, bool inStac
     //Pop the found SCC and give highest value to the components
     int w = 0;
     int index = 0;
-    vertice **scc;
+    vertice **scc = (vertice**)malloc(sizeof(vertice*) * graphSize);
+
     if (low[vertex] == disc[vertex]) {
         while (stack.top() != vertex) {
             w = (int)stack.top();
@@ -129,6 +142,7 @@ void tarjanSCC(int vertex, int disc[], int low[], stack<int> &stack, bool inStac
         stack.pop();
     }
     giveValues(scc, index);
+    free(scc);
 }
 
 void tarjan(vertice **graph, int u) { // u = number of nodes
@@ -145,11 +159,13 @@ void tarjan(vertice **graph, int u) { // u = number of nodes
         if (d[i] == NIL)
             tarjanSCC(i, d, low, s, inStack, graph);
     }
+
+    printGraph(graph, graphSize);
 }
 
 int main(){
     processInput("T01_clique.in");
-    tarjan(vertice_array, graphSize);
+    //tarjan(vertice_array, graphSize);
     cout << "algorithm completed" << "\n";
     return 0;
 }
