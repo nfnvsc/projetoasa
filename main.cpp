@@ -16,7 +16,7 @@ class Graph{
     int *vertList;
 
     void dfs();
-    void dfsSearch(int vertex, vector<bool> &visited);
+    void dfsSearch(int vertex, bool *visited);
 
 public:
     Graph(int v);
@@ -41,33 +41,44 @@ void Graph::addConnection(int x, int y){
 
 void Graph::printGraph(){
     dfs();
-    cout << "Number vertices: " << v << "\n";
     for(int i = 0; i<v; i++)
         cout << vertList[i] <<"\n";
 }
 
 void Graph::dfs() {
-    vector<bool> visited(v, false);
+    bool *visited = new bool[v]; 
+    for (int i = 0; i < v; i++) visited[i] = false;
+
     for (int i = 0; i < v; i++)
         if (!visited[i])
             dfsSearch(i, visited);
 }
 
-void Graph::dfsSearch(int vertex, vector<bool> &visited) {
-    stack<int> stack;
-    stack.push(vertex);
-    // while(!stack.empty()) { ->  segfault com isto
-        vertex = stack.top();
-        stack.pop();
-        if (!visited[vertex]) {
-            visited[vertex] = true;
+void Graph::dfsSearch(int vertex, bool *visited) {
+    static int max_val = 0;
+    int aux = 0;
+
+    if (!visited[vertex]){
+        visited[vertex] = true;
+    } 
+
+    auto i = adjList[vertex].begin();
+
+    while(i != adjList[vertex].end()){
+
+        if(!visited[*i]){
+            dfsSearch(*i, visited);
         }
-        for (auto i = adjList[vertex].begin(); i != adjList[vertex].end(); i++) {
-            if(!visited[*i])
-            stack.push(*i);
-        }
-    //}
+
+        vertList[vertex] = vertList[vertex] > max_val ? vertList[vertex] : max_val;
+        max_val = 0;
+        i++;
+    }
+
+    max_val = vertList[vertex] > max_val ? vertList[vertex] : max_val;
+    vertList[vertex] = max_val;
 }
+
 /*
 void giveValues(vertice **scc, int num_nodes)
 {
@@ -104,7 +115,7 @@ void processInput(string file_name){
             getline(myfile, line);
             sscanf(line.c_str(), "%d %d", &aux1, &aux2);
 
-            graph.addConnection(aux1-1, aux2);
+            graph.addConnection(aux1 - 1, aux2 - 1);
         }
         graph.printGraph();
         myfile.close();
@@ -115,7 +126,7 @@ void processInput(string file_name){
 
 
 int main(){
-    processInput("T01_clique.in");
+    processInput("T04_small_no_prop.in");
 
     return 0;
 }
