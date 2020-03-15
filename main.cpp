@@ -15,14 +15,14 @@ class Graph{
     list<int> *adjList; /*list of adjacent vertexs*/
     int *vertList;
 
-    void tarjan();
-    void tarjanSCC(int vertex, int disc[], int low[], stack<int> &stack, bool inStack[], bool reset);
+    void dfs();
+    void dfsSearch(int vertex, vector<bool> &visited);
 
-    public:
-        Graph(int v);
-        void addVertex(int val, int i);
-        void addConnection(int x, int y);
-        void printGraph();
+public:
+    Graph(int v);
+    void addVertex(int val, int i);
+    void addConnection(int x, int y);
+    void printGraph();
 };
 
 Graph::Graph(int v){
@@ -40,68 +40,34 @@ void Graph::addConnection(int x, int y){
 }
 
 void Graph::printGraph(){
-    tarjan();
+    dfs();
     cout << "Number vertices: " << v << "\n";
     for(int i = 0; i<v; i++)
         cout << vertList[i] <<"\n";
 }
 
-void Graph::tarjan() { // u = number of nodes
-    int *d = new int[v];
-    int *low = new int[v];
-    bool *inStack = new bool[v];
-    stack<int> s;
-
-    for (int i = 0; i < v; i++) {
-        d[i] = low[i] = NIL;
-        inStack[i] = false;
-    }
-
-    for (int i = 0; i < v; i++) {
-        if (d[i] == NIL)
-            tarjanSCC(i, d, low, s, inStack, true);
-    }
-
+void Graph::dfs() {
+    vector<bool> visited(v, false);
+    for (int i = 0; i < v; i++)
+        if (!visited[i])
+            dfsSearch(i, visited);
 }
 
-void Graph::tarjanSCC(int vertex, int disc[], int low[], stack<int> &stack, bool inStack[], bool reset) {
-    static int dtime = 0;
-    static int max_val;
-
-    disc[vertex] = low[vertex] = ++dtime;
-
-    max_val = reset ? 0 : max(max_val, vertList[vertex]);
-
+void Graph::dfsSearch(int vertex, vector<bool> &visited) {
+    stack<int> stack;
     stack.push(vertex);
-    inStack[vertex] = true;
-
-    for (list<int>::iterator it = adjList[vertex].begin(); it != adjList[vertex].end(); it++) {
-        int ver = *it;
-        if (disc[ver] == NIL) {
-            tarjanSCC(ver, disc, low, stack, inStack, false);
-            low[vertex] = min(low[vertex], low[ver]);
-        }
-        else if (inStack[ver] == true)
-            low[vertex] = min(low[vertex], disc[ver]);
-    }
-
-    //Pop the found SCC and give highest value to the components
-    int w = 0;
-    if (low[vertex] == disc[vertex]) {
-        while (stack.top() != vertex) {
-            w = (int)stack.top();
-            vertList[w] = max_val; //ta certo?
-            inStack[w] = false;
-            stack.pop();
-        }
-        w = (int)stack.top();
-        vertList[w] = max_val; //ta certo?
-        inStack[w] = false;
+    // while(!stack.empty()) { ->  segfault com isto
+        vertex = stack.top();
         stack.pop();
-    }
-
+        if (!visited[vertex]) {
+            visited[vertex] = true;
+        }
+        for (auto i = adjList[vertex].begin(); i != adjList[vertex].end(); i++) {
+            if(!visited[*i])
+            stack.push(*i);
+        }
+    //}
 }
-
 /*
 void giveValues(vertice **scc, int num_nodes)
 {
@@ -141,7 +107,6 @@ void processInput(string file_name){
             graph.addConnection(aux1-1, aux2);
         }
         graph.printGraph();
-      
         myfile.close();
     }
 
@@ -150,7 +115,7 @@ void processInput(string file_name){
 
 
 int main(){
-    processInput("T02_tree_with_prop.in");
-    
+    processInput("T01_clique.in");
+
     return 0;
 }
