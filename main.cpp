@@ -4,18 +4,23 @@
 #include <list>
 #include <iostream>
 #include <bits/stdc++.h>
+#define min(a,b) (a < b ? a : b);
+#define max(a,b) (a > b ? a : b);
 #define NIL -1
 
 using namespace std;
 
 class Graph{
     int v;
-    list<int> *adjList;
-    list<int> vertList;
+    list<int> *adjList; /*list of adjacent vertexs*/
+    int *vertList;
+
+    void tarjan();
+    void tarjanSCC(int vertex, int disc[], int low[], stack<int> &stack, bool inStack[], bool reset);
 
     public:
         Graph(int v);
-        void addVertex(int val);
+        void addVertex(int val, int i);
         void addConnection(int x, int y);
         void printGraph();
 };
@@ -23,10 +28,11 @@ class Graph{
 Graph::Graph(int v){
     this->v = v;
     adjList = new list<int>[v];
+    vertList = new int[v];
 }
 
-void Graph::addVertex(int val){
-    vertList.push_back(val);
+void Graph::addVertex(int val, int i){
+    vertList[i] = val;
 }
 
 void Graph::addConnection(int x, int y){
@@ -34,68 +40,69 @@ void Graph::addConnection(int x, int y){
 }
 
 void Graph::printGraph(){
-    cout << v << "\n";
+    tarjan();
+    cout << "Number vertices: " << v << "\n";
     for(int i = 0; i<v; i++)
-        for (list<int>::iterator it = adjList[i].begin(); it != adjList[i].end(); it++)
-            cout << i + 1 << " + " << *it << "\n";
+        cout << vertList[i] <<"\n";
 }
 
-typedef struct vertice {
-    int val;
-    int num_connected;
-    int *connected;
-} vertice;
+void Graph::tarjan() { // u = number of nodes
+    int *d = new int[v];
+    int *low = new int[v];
+    bool *inStack = new bool[v];
+    stack<int> s;
 
-int graphSize;
-
-int min(int a, int b) {
-    return a < b ? a : b;
-}
-
-void processInput(string file_name){
-    string line;
-    ifstream myfile(file_name);
-    int *vertexValues;
-    int second;
-    int i, aux1, aux2;
-
-    if (myfile.is_open()){
-        getline(myfile,line);
-        sscanf(line.c_str(), "%d,%d", &graphSize, &second);
-        
-        vertexValues = new int[graphSize];
-        Graph graph(graphSize);
-
-        for(i = 0; i < graphSize; i++){
-            getline(myfile, line);
-            sscanf(line.c_str(), "%d", &aux1);
-
-            graph.addVertex(aux1);
-        }
-
-        for(i = 0; i < second; i++){
-            getline(myfile, line);
-            sscanf(line.c_str(), "%d %d", &aux1, &aux2);
-
-            graph.addConnection(aux1-1, aux2);
-        }
-      
-        myfile.close();
-        cout << "Printing\n";
-        graph.printGraph();
-
+    for (int i = 0; i < v; i++) {
+        d[i] = low[i] = NIL;
+        inStack[i] = false;
     }
 
-    else cout << "Unable to open file"; 
-}
-
-void printGraph(vertice **graph, int graphSize) {
-    for (int i = 0; i < graphSize; i++)
-    {
-        cout << graph[i]->val << "\n";
+    for (int i = 0; i < v; i++) {
+        if (d[i] == NIL)
+            tarjanSCC(i, d, low, s, inStack, true);
     }
+
 }
 
+void Graph::tarjanSCC(int vertex, int disc[], int low[], stack<int> &stack, bool inStack[], bool reset) {
+    static int dtime = 0;
+    static int max_val;
+
+    disc[vertex] = low[vertex] = ++dtime;
+
+    max_val = reset ? 0 : max(max_val, vertList[vertex]);
+
+    stack.push(vertex);
+    inStack[vertex] = true;
+
+    for (list<int>::iterator it = adjList[vertex].begin(); it != adjList[vertex].end(); it++) {
+        int ver = *it;
+        if (disc[ver] == NIL) {
+            tarjanSCC(ver, disc, low, stack, inStack, false);
+            low[vertex] = min(low[vertex], low[ver]);
+        }
+        else if (inStack[ver] == true)
+            low[vertex] = min(low[vertex], disc[ver]);
+    }
+
+    //Pop the found SCC and give highest value to the components
+    int w = 0;
+    if (low[vertex] == disc[vertex]) {
+        while (stack.top() != vertex) {
+            w = (int)stack.top();
+            vertList[w] = max_val; //ta certo?
+            inStack[w] = false;
+            stack.pop();
+        }
+        w = (int)stack.top();
+        vertList[w] = max_val; //ta certo?
+        inStack[w] = false;
+        stack.pop();
+    }
+
+}
+
+/*
 void giveValues(vertice **scc, int num_nodes)
 {
     int maxValue = 0;
@@ -106,66 +113,44 @@ void giveValues(vertice **scc, int num_nodes)
     for (int i = 0; i < num_nodes; i++)
         scc[i]->val = maxValue;
 }
+*/
 
-void tarjanSCC(int vertex, int disc[], int low[], stack<int> &stack, bool inStack[], vertice **graph) {
-    static int dtime = 0;
+void processInput(string file_name){
+    string line;
+    ifstream myfile(file_name);
+    int first, second;
+    int aux1, aux2;
 
-    disc[vertex] = low[vertex] = ++dtime;
-    stack.push(vertex);
-    inStack[vertex] = true;
+    if (myfile.is_open()){
+        getline(myfile,line);
+        sscanf(line.c_str(), "%d,%d", &first, &second);
 
-    for (int i = 0; i < graph[vertex]->num_connected; i++) {
-        int ver = graph[vertex]->connected[i];
-        if (disc[ver] == NIL) {
-            tarjanSCC(ver, disc, low, stack, inStack, graph);
-            low[vertex] = min(low[vertex], low[ver]);
+        Graph graph(first);
+
+        for(int i = 0; i < first; i++){
+            getline(myfile, line);
+            sscanf(line.c_str(), "%d", &aux1);
+
+            graph.addVertex(aux1, i);
         }
-        else if (inStack[ver] == true)
-            low[vertex] = min(low[vertex], disc[ver]);
+
+        for(int i = 0; i < second; i++){
+            getline(myfile, line);
+            sscanf(line.c_str(), "%d %d", &aux1, &aux2);
+
+            graph.addConnection(aux1-1, aux2);
+        }
+        graph.printGraph();
+      
+        myfile.close();
     }
 
-    //Pop the found SCC and give highest value to the components
-    int w = 0;
-    int index = 0;
-    vertice **scc = (vertice**)malloc(sizeof(vertice*) * graphSize);
-
-    if (low[vertex] == disc[vertex]) {
-        while (stack.top() != vertex) {
-            w = (int)stack.top();
-            scc[index++] = get_vertice(w);
-            inStack[w] = false;
-            stack.pop();
-        }
-        w = (int)stack.top();
-        scc[index++] = get_vertice(w);
-        inStack[w] = false;
-        stack.pop();
-    }
-    giveValues(scc, index);
-    free(scc);
+    else cout << "Unable to open file"; 
 }
 
-void tarjan(vertice **graph, int u) { // u = number of nodes
-    int *d = new int[u];
-    int *low = new int[u];
-    bool *inStack = new bool[u];
-    stack<int> s;
-
-    for (int i = 0; i < u; i++) {
-        d[i] = low[i] = NIL;
-        inStack[i] = false;
-    }
-    for (int i = 0; i < u; i++) {
-        if (d[i] == NIL)
-            tarjanSCC(i, d, low, s, inStack, graph);
-    }
-
-    printGraph(graph, graphSize);
-}
 
 int main(){
-    processInput("T01_clique.in");
-    //tarjan(vertice_array, graphSize);
-    cout << "algorithm completed" << "\n";
+    processInput("T02_tree_with_prop.in");
+    
     return 0;
 }
