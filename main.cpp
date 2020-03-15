@@ -56,7 +56,6 @@ void Graph::dfs() {
 
 void Graph::dfsSearch(int vertex, bool *visited) {
     static int max_val = 0;
-    int aux = 0;
 
     if (!visited[vertex]){
         visited[vertex] = true;
@@ -74,59 +73,37 @@ void Graph::dfsSearch(int vertex, bool *visited) {
         max_val = 0;
         i++;
     }
-
+    
     max_val = vertList[vertex] > max_val ? vertList[vertex] : max_val;
     vertList[vertex] = max_val;
 }
 
-/*
-void giveValues(vertice **scc, int num_nodes)
-{
-    int maxValue = 0;
-    for (int i = 0; i < num_nodes; i++) 
-        if (scc[i]->val > maxValue)
-            maxValue = scc[i]->val;
 
-    for (int i = 0; i < num_nodes; i++)
-        scc[i]->val = maxValue;
-}
-*/
-
-void processInput(string file_name){
-    string line;
-    ifstream myfile(file_name);
+void processInput(){
     int first, second;
     int aux1, aux2;
 
-    if (myfile.is_open()){
-        getline(myfile,line);
-        sscanf(line.c_str(), "%d,%d", &first, &second);
+    if (scanf("%d,%d", &first, &second) == 0) return;
 
-        Graph graph(first);
+    Graph graph(first);
 
-        for(int i = 0; i < first; i++){
-            getline(myfile, line);
-            sscanf(line.c_str(), "%d", &aux1);
+    for(int i = 0; i < first; i++){
+       if(scanf("%d", &aux1) == 0) return;
 
-            graph.addVertex(aux1, i);
-        }
-
-        for(int i = 0; i < second; i++){
-            getline(myfile, line);
-            sscanf(line.c_str(), "%d %d", &aux1, &aux2);
-
-            graph.addConnection(aux1 - 1, aux2 - 1);
-        }
-        graph.printGraph();
-        myfile.close();
+        graph.addVertex(aux1, i);
     }
 
-    else cout << "Unable to open file"; 
+    for(int i = 0; i < second; i++){
+        if(scanf("%d %d", &aux1, &aux2) == 0) return;
+
+        graph.addConnection(aux1 - 1, aux2 - 1);
+    }
+    graph.printGraph();
 }
 
 
 int main(){
-    processInput("T04_small_no_prop.in");
+    processInput();
 
     return 0;
 }
