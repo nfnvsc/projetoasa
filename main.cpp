@@ -20,6 +20,7 @@ class Graph{
     int *maxVisit;
 
     void dfs();
+    int aux(int vertex, int *visited);
     void dfsSearch(int vertex, int *visited);
 
 public:
@@ -45,8 +46,10 @@ void Graph::addVertex(int val, int i){
 void Graph::addConnection(int x, int y){
     adjList[x].push_back(y); 
 
-    if (!adjList[y].empty())
-        maxVisit[y] += 1;
+    //if (!adjList[y].empty())
+    maxVisit[y] += 1;
+
+    
 
 }
 
@@ -59,29 +62,54 @@ void Graph::printGraph(){
 void Graph::dfs() {
     max_val = 0; //nao devia ser global
     int *visited = new int[v]; 
-    for (int i = 0; i < v; i++) visited[i] = 0;
+    for (int i = 0; i < v; i++){
+        visited[i] = 0; 
+
+        if(adjList[i].empty())
+            maxVisit[i] = 1;
+    } 
+    
+    //cout << "vert 4: " << maxVisit[3] << "\n";
 
     for (int i = 0; i < v; i++)
         if (visited[i] != maxVisit[i])
             dfsSearch(i, visited);
 }
 
+int Graph::aux(int vertex, int *visited){
+
+    auto i = adjList[vertex].begin();
+    int vert = *i;
+
+    while(i != adjList[vertex].end()){
+        if((visited[*i] < visited[vert]) && (visited[*i] < maxVisit[*i]))
+            vert = *i;
+        i++;
+    }
+
+
+    if (visited[vert] == maxVisit[vert]) return -1;
+
+    return vert;
+}
+
 void Graph::dfsSearch(int vertex, int *visited) {
     if (visited[vertex] != maxVisit[vertex])
         visited[vertex] += 1;
 
-    auto i = adjList[vertex].begin();
+    //cout << vertex + 1 << " ";
 
-    while(i != adjList[vertex].end()){
+    int vert;
 
-        if(visited[*i] != maxVisit[*i])
-            dfsSearch(*i, visited);
+    while((vert = aux(vertex, visited)) != -1){
 
+        dfsSearch(vert, visited);
+        //cout << vertex + 1 << " ";
         vertList[vertex] = vertList[vertex] > max_val ? vertList[vertex] : max_val;
         max_val = 0;
-        i++;
     }
     
+    //cout << "\n";
     max_val = vertList[vertex] > max_val ? vertList[vertex] : max_val;
     vertList[vertex] = max_val;
 }
@@ -148,7 +176,18 @@ void processInput(){
 
 int main(){
 
-    processInput();
+    //processInput();
+
+    processInputFile("T01_clique.in");
+    cout << "XXXXXXXX\n";
+    processInputFile("T02_tree_with_prop.in");
+    cout << "XXXXXXXX\n";
+    processInputFile("T03_tree_no_prop.in");
+    cout << "XXXXXXXX\n";
+    processInputFile("T04_small_no_prop.in");
+    cout << "XXXXXXXX\n";
+    processInputFile("T05_disconnected.in");
+
 
     return 0;
 }
