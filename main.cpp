@@ -48,9 +48,6 @@ void Graph::addConnection(int x, int y){
 
     //if (!adjList[y].empty())
     maxVisit[y] += 1;
-
-    
-
 }
 
 void Graph::printGraph(){
@@ -60,35 +57,43 @@ void Graph::printGraph(){
 }
 
 void Graph::dfs() {
-    max_val = 0; //nao devia ser global
+     //nao devia ser global
     int *visited = new int[v]; 
     for (int i = 0; i < v; i++){
         visited[i] = 0; 
-
         if(adjList[i].empty())
             maxVisit[i] = 1;
+        //cout << "adList: " << *adjList[i].begin()<< "\n";
+        //cout << "Visit: " << maxVisit[i]<< "\n\n";
     } 
     
     //cout << "vert 4: " << maxVisit[3] << "\n";
 
-    for (int i = 0; i < v; i++)
-        if (visited[i] != maxVisit[i])
+    for (int i = 0; i < v; i++){
+        max_val = 0;
+        if (visited[i] < maxVisit[i])
             dfsSearch(i, visited);
+    }
+        
+        
 }
 
 int Graph::aux(int vertex, int *visited){
-
-    auto i = adjList[vertex].begin();
-    int vert = *i;
-
-    while(i != adjList[vertex].end()){
-        if((visited[*i] < visited[vert]) && (visited[*i] < maxVisit[*i]))
+    int vert = -1;
+    list<int>::iterator i;
+    
+    for(i = adjList[vertex].begin(); i != adjList[vertex].end(); i++){
+        if(visited[*i] < maxVisit[*i]){ //first avaliable vertex
             vert = *i;
-        i++;
+            break;
+        }
     }
+    
+    if(vert == -1) return -1;
 
-
-    if (visited[vert] == maxVisit[vert]) return -1;
+    for(;i != adjList[vertex].end();i++)
+        if((visited[*i] < visited[vert]) && (visited[*i] < maxVisit[*i])) //get the vertex with least visits
+            vert = *i;
 
     return vert;
 }
@@ -176,7 +181,8 @@ void processInput(){
 
 int main(){
 
-    //processInput();
+    processInput();
+    cout << "XXXXXXXX\n";
 
     processInputFile("T01_clique.in");
     cout << "XXXXXXXX\n";
