@@ -10,23 +10,22 @@
 
 using namespace std;
 
-int max_val = 0;
-
+int max_val = -1;
 
 class Graph{
     int v;
     list<int> *adjList; /*list of adjacent vertexs*/
     int *vertList; /*list of vertex values*/
-    int *maxVisit; /*max number of time a vertex can be visited*/
+    bool *testList; /*max number of time a vertex can be visited*/
 
-    int nextVisit(int vertex, int *visited, bool cond);
-    void dfsSearch(int vertex, int *visited, bool cond);
+    int nextVisit(int vertex);
+    void dfsSearch(int vertex);
 
 public:
     Graph(int v);
-    void dfs();
     void addVertex(int val, int i);
     void addConnection(int x, int y);
+    void dfs();
     void printGraph();
 };
 
@@ -34,9 +33,9 @@ Graph::Graph(int v){
     this->v = v;
     adjList = new list<int>[v];
     vertList = new int[v];
-    maxVisit = new int[v];
+    testList = new bool[v];
 
-    for(int i = 0; i<v; i++) maxVisit[i] = 1;
+    for(int i = 0; i<v; i++) testList[i] = false;
 }
 
 void Graph::addVertex(int val, int i){
@@ -45,7 +44,6 @@ void Graph::addVertex(int val, int i){
 
 void Graph::addConnection(int x, int y){
     adjList[x].push_back(y); 
-    maxVisit[y] += 1;
 }
 
 void Graph::printGraph(){
@@ -54,81 +52,46 @@ void Graph::printGraph(){
 }
 
 void Graph::dfs() {
-    int *visited = new int[v]; 
     for (int i = 0; i < v; i++){
-        visited[i] = 0; 
-        if(adjList[i].empty())
-            maxVisit[i] -= 1;
-    } 
-
-    for (int i = 0; i < v; i++){
-        max_val = 0;
-        if ((visited[i] < maxVisit[i]) && (!adjList[i].empty()))
-            dfsSearch(i, visited, true);
+        max_val = -1;
+        dfsSearch(i);
     }
-
-    for(int i = 0; i < v; i++){
-        //cout << "Expected: " << maxVisit[i] << " Got: " << visited[i] << "\n";
-        max_val = 0;
-        while(maxVisit[i] > visited[i])
-            dfsSearch(i, visited, true);
-    }
-    /*
-    for(int i = 0; i < v; i++){
-        cout << "Expected: " << maxVisit[i] << " Got: " << visited[i] << "\n";
-    }
-    */
 }   
 
-int Graph::nextVisit(int vertex, int *visited, bool cond){
+int Graph::nextVisit(int vertex){
     int vert = -1;
-    //static int auxVert = -1;
 
     list<int>::iterator i;
     
-    if(!cond){
-        for(i = adjList[vertex].begin(); i != adjList[vertex].end(); i++)
-            if(visited[*i] == 0){ //only select undiscovered vertexs
-                vert = *i; 
-                break;
-            }
+    for(i = adjList[vertex].begin(); i != adjList[vertex].end(); i++){
+        if(!testList[*i]){ //first avaliable vertex
+            vert = *i; 
+            break;
+        }
     }
-
-    else{
-        for(i = adjList[vertex].begin(); i != adjList[vertex].end(); i++){
-            if(visited[*i] < maxVisit[*i]){ //first avaliable vertex
-                vert = *i; 
-                break;
-                }
-            }
-    }
-
     adjList[vertex].remove(vert); //no longer needs to be visited
 
     return vert;
 }
 
-void Graph::dfsSearch(int vertex, int *visited, bool cond) {
-    if (visited[vertex] != maxVisit[vertex])
-        visited[vertex] += 1;
-
+void Graph::dfsSearch(int vertex) {
+    testList[vertex] = true;
     //cout << vertex + 1 << " ";
 
     int vert;
+    while((vert = nextVisit(vertex)) != -1){
 
-    while((vert = nextVisit(vertex, visited, cond)) != -1){
-
-        dfsSearch(vert, visited, false);
+        dfsSearch(vert);
         //cout << vertex + 1 << " ";
         vertList[vertex] = vertList[vertex] > max_val ? vertList[vertex] : max_val;
         //cout << "\1Vertex: " << vertex + 1 << " has now -> " << vertList[vertex];
-        max_val = 0;
+        max_val = -1;
     }
     
     max_val = vertList[vertex] > max_val ? vertList[vertex] : max_val;
-    vertList[vertex] = max_val;
-    //cout << "\n Vertex: " << vertex + 1 << " has now -> " << vertList[vertex];
+    vertList[vertex] = max_val;    //cout << "\n Vertex: " << vertex + 1 << " has now -> " << vertList[vertex];
     //cout << "\nMAX_VAL: " << max_val << "\n";
+    testList[vertex] = false;
 
 }
 
