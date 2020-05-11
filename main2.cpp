@@ -2,7 +2,9 @@
 #include <vector>
 #include <list>
 #include <queue>
+#include <limits>
 #define CAPACITY 1
+
 using namespace std;
 
 struct Edge
@@ -55,6 +57,7 @@ public:
 
                 if (edge.v == sink)
                 {
+                    printf("encontrou saida\n");
 
                     // A path was found from source to sink
                     // Find the maximum flow on this path
@@ -91,36 +94,41 @@ void processInput()
 {
     int M, N, S, C;
     int x, y;
-    if (scanf("%d,%d", &M, &N) == 0)
+    if (scanf("%d %d", &M, &N) == 0)
         return;
-    if (scanf("%d,%d", &S, &C) == 0)
+    if (scanf("%d %d", &S, &C) == 0)
         return;
-    Graph graph(M * N);
+    Graph graph((M * N) +2);
     for (int i = 1; i < M * N + 1; i++)
     {
         //right
-        if (i % N != 0)
-            graph.addEdge(i, i + 1, 1);
+        if (i % N != 0){
+            graph.addEdge(i, i + 1);
+        printf("Right:%d %d\n", i, i+1);
+    }
         //under
-        if (i < M * (N - 1))
-            graph.addEdge(i, i + N, 1);
+        if (i < M * (N - 1)) {
+            graph.addEdge(i, i + M);
+            printf("Under:%d %d\n", i, i + M);
+        }
+    
     }
     for (int i = 0; i < S; i++)
     {
         if (scanf("%d %d", &x, &y) == 0)
             return;
-        graph.addEdge(M * N + 1, N * x + y + 1);
+        graph.addEdge(M * N + 1, M * (y - 1) + x);
     }
     for (int i = 0; i < C; i++)
     {
         if (scanf("%d %d", &x, &y) == 0)
             return;
-        graph.addEdge(0, N * x + y + 1);
+        graph.addEdge(0, M * (y - 1) + x);
     }
 
     graph.setSource(0);
     graph.setSink(M * N + 1);
-
+    cout << graph.maximumFlow() << endl;
 }
 
 int main() {
