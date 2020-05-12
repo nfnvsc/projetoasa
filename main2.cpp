@@ -62,9 +62,10 @@ public:
             int current = bfsQueue.front();
             bfsQueue.pop_front();
             //parentEdges[current] = 0;
+            cout << "current: " << current << endl;
             for (auto &edge : adjacencyList[current])
             {
-                if (parentEdges[edge.v] != NULL) continue; //prevent it from going backwards
+                if ((edge.v != sink) && (parentEdges[edge.v] != NULL)) continue; //prevent it from going backwards
 
                 printf("Parent of %d is %d\n", edge.v, edge.u);
                 parentEdges[edge.v] = &edge;
@@ -82,7 +83,7 @@ public:
                     while (parentEdge != nullptr)
                     {
                         maxFlow = min(maxFlow, parentEdge->cap - parentEdge->flux);
-                        maxFlow = min(maxFlow, intraEdges[edge.u].cap - intraEdges[edge.u].flux);
+                        //maxFlow = min(maxFlow, intraEdges[edge.u].cap - intraEdges[edge.u].flux);
                         parentEdge = parentEdges[parentEdge->u];
                         //printf("\n%d", parentEdge->u);
                     }
@@ -93,7 +94,7 @@ public:
                     parentEdge = parentEdges[edge.v];
                     while (parentEdge != nullptr)
                     {
-                        intraEdges[edge.u].flux += maxFlow;
+                        //intraEdges[edge.u].flux += maxFlow;
                         parentEdge->flux += maxFlow;
                         parentEdge = parentEdges[parentEdge->u];
                     }
