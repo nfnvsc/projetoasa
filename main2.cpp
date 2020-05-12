@@ -11,7 +11,7 @@ struct Edge
 {
     int u;      // Origin
     int v;      // Destination
-    int cap = CAPACITY; // Capacity
+    int cap;
     int flux;   // Current flux
 };
 
@@ -24,7 +24,7 @@ public:
     }
     void addEdge(int u, int v)
     {
-        adjacencyList[u].push_back({u, v, 0});
+        adjacencyList[u].push_back({u, v, CAPACITY, 0});
     }
     void setSource(int s)
     {
@@ -102,28 +102,24 @@ void processInput()
     for (int i = 1; i < M * N + 1; i++)
     {
         //right
-        if (i % N != 0){
+        if (i % N != 0)
             graph.addEdge(i, i + 1);
-        printf("Right:%d %d\n", i, i+1);
-    }
+
         //under
-        if (i < M * (N - 1)) {
+        if (i < M * (N - 1))
             graph.addEdge(i, i + M);
-            printf("Under:%d %d\n", i, i + M);
-        }
-    
     }
     for (int i = 0; i < S; i++)
     {
         if (scanf("%d %d", &x, &y) == 0)
             return;
-        graph.addEdge(M * N + 1, M * (y - 1) + x);
+        graph.addEdge(M * (y - 1) + x, M * N + 1); //supermercados apontam para o target
     }
     for (int i = 0; i < C; i++)
     {
         if (scanf("%d %d", &x, &y) == 0)
             return;
-        graph.addEdge(0, M * (y - 1) + x);
+        graph.addEdge(0, M * (y - 1) + x); //source aponta para as casas 
     }
 
     graph.setSource(0);
