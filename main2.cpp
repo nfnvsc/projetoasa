@@ -19,12 +19,23 @@ class Graph {
 public:
     Graph(int V) : source(-1), sink(-1)
     {
+        intraEdges = (Edge*)malloc(sizeof(Edge)*V);
         adjacencyList.resize(V);
         numberOfVertices = V;
     }
+    void addIntraEdge(int u)
+    {   
+
+        //Edge edge = {u, u, CAPACITY, 0};
+        intraEdges[u] = {u, u, CAPACITY, 0}; 
+    }
     void addEdge(int u, int v)
-    {
+    {        
         adjacencyList[u].push_back({u, v, CAPACITY, 0});
+    }
+    void clearEdges(int u)
+    {        
+        adjacencyList[u].clear();
     }
     void setSource(int s)
     {
@@ -71,8 +82,9 @@ public:
                     while (parentEdge != nullptr)
                     {
                         maxFlow = min(maxFlow, parentEdge->cap - parentEdge->flux);
+                        maxFlow = min(maxFlow, intraEdges[edge.u].cap - intraEdges[edge.u].flux);
                         parentEdge = parentEdges[parentEdge->u];
-                        //printf("\n%d", parentEdge->v);
+                        //printf("\n%d", parentEdge->u);
                     }
 
                     maximumFlow += maxFlow;
@@ -81,6 +93,7 @@ public:
                     parentEdge = parentEdges[edge.v];
                     while (parentEdge != nullptr)
                     {
+                        intraEdges[edge.u].flux += maxFlow;
                         parentEdge->flux += maxFlow;
                         parentEdge = parentEdges[parentEdge->u];
                     }
@@ -92,6 +105,7 @@ public:
 
 private:
     vector<list<Edge>> adjacencyList;
+    Edge* intraEdges;
     int numberOfVertices;
     int source, sink;
 };
@@ -104,14 +118,14 @@ void processInput()
         return;
     if (scanf("%d %d", &S, &C) == 0)
         return;
+
     Graph graph((M * N)*2 + 2);
 
     for (int i = 1; i < M * N + 1; i++)
     {
-        //graph.addEdge(i,i);
+        graph.addIntraEdge(i);
         //right
-        if (i % N != 3){
-            printf("%d\n", i);
+        if (i % M != 0){
             graph.addEdge(i, i + 1);
             graph.addEdge(i + 1, i);
         }
@@ -125,6 +139,7 @@ void processInput()
     for (int i = 0; i < S; i++)
     {
         if (scanf("%d %d", &x, &y) == 0) return;
+        graph.clearEdges(M * (y - 1) + x);
        
         graph.addEdge(M * (y - 1) + x, M * N + 1); //supermercados apontam para o target
     }
