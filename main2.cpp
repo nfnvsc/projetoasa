@@ -19,16 +19,17 @@ struct Edge
 
 class Graph {
 public:
-    Graph(int V) : source(-1), sink(-1)
+    Graph(int V)
     {
         intraEdges = (Edge*)malloc(sizeof(Edge)*V);
         adjacencyList.resize(V);
         numberOfVertices = V;
+        parent = (Edge**)malloc(sizeof(Edge*)*numberOfVertices); // This array is filled by BFS and to store path
+        for(int i=0; i< numberOfVertices; i++) parent[i] = NULL;
     }
     void addIntraEdge(int u)
     {   
 
-        //Edge edge = {u, u, CAPACITY, 0};
         intraEdges[u] = {u, u, CAPACITY, 0}; 
     }
     void addEdge(int u, int v)
@@ -48,11 +49,11 @@ public:
         sink = s;
     }
 
-    int rCap(Edge edge){
-        return edge.cap - edge.flux;
+    int rCap(Edge *edge){
+        return edge->cap - edge->flux;
     }
 
-    bool bfs(Edge** parent)
+    bool bfs()
     {
         // Create a visited array and mark all vertices as not visited
         bool visited[numberOfVertices];
@@ -70,15 +71,15 @@ public:
         {
             int current = q.front();
             q.pop();
-            for (auto &edge : adjacencyList[current]) {           
-                if ((visited[edge.v] == false) && (rCap(edge) > 0)) {
+            for (auto &edge : adjacencyList[current]) {          
+                if ((visited[edge.v] == false) && (rCap(&edge) > 0)) {
                     q.push(edge.v);
-                    cout << edge.v<< endl;
-                    parent[edge.v] = &edge;
+                    parent[edge.v] = &edge;                    
                     visited[edge.v] = true;
                 }
             }
         }
+
 
         // If we reached sink in BFS starting from source, then return
         // true, else false
@@ -86,39 +87,38 @@ public:
     }
     int fordFulkerson() {
         int v;
-        Edge parentEdge;
+        Edge* parentEdge;
 
         // Create a residual graph and fill the residual graph with
         // given capacities in the original graph as residual capacities
         // in residual graph
 
-        Edge* parent[numberOfVertices]; // This array is filled by BFS and to store path
-
         int max_flow = 0; // There is no flow initially
 
         // Augment the flow while tere is path from source to sink
-        while (bfs(parent))
+        while (bfs())
         {
             // Find minimum residual capacity of the edges along the
             // path filled by BFS. Or we can say find the maximum flow
             // through the path found.
 
-            int path_flow = INT_MAX;
+            int path_flow = 1;
             for (v = sink; v != source; v = parent[v]->u)
             {
-                parentEdge = *parent[v];
+                parentEdge = parent[v];
                 path_flow = min(path_flow, rCap(parentEdge));
+
             }
 
             // update residual capacities of the edges and reverse edges
             // along the path
             for (v = sink; v != source; v = parent[v]->u)
             {
-                parentEdge = *parent[v];
-                parentEdge.flux -= path_flow;
+                parentEdge = parent[v];
+                parentEdge->flux += path_flow;
                 for (auto invEdge : adjacencyList[v]) 
-                    if (invEdge.v == parentEdge.u){
-                        invEdge.flux += path_flow;
+                    if (invEdge.v == parentEdge->u){
+                        invEdge.flux -= path_flow;
                         break;
                     }
             }
@@ -134,8 +134,9 @@ public:
 private:
     vector<list<Edge>> adjacencyList;
     Edge* intraEdges;
+    Edge** parent;
     int numberOfVertices;
-    int source, sink, markets, houses;
+    int source, sink;
 };
 
 void processInput()
@@ -148,7 +149,7 @@ void processInput()
         return;
 
     Graph graph((M * N)*2 + 2);
-
+    
     for (int i = 1; i < M * N + 1; i++)
     {
         graph.addIntraEdge(i);
@@ -175,13 +176,13 @@ void processInput()
         if (scanf("%d %d", &x, &y) == 0) return;
         graph.addEdge(0, M * (y - 1) + x); //source aponta para as casas 
     }
-
     graph.setSource(0);
     graph.setSink(M * N + 1);
     cout << graph.fordFulkerson() << endl;
 }
 
 int main() {
+    
     processInput();
     return 0;
 }
