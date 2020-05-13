@@ -21,15 +21,14 @@ class Graph {
 public:
     Graph(int V)
     {
-        intraEdges = (Edge*)malloc(sizeof(Edge)*V);
-        adjacencyList.resize(V);
         numberOfVertices = V;
+        intraEdges = (Edge*)malloc(sizeof(Edge)*numberOfVertices);
+        adjacencyList.resize(V);
         parent = (Edge**)malloc(sizeof(Edge*)*numberOfVertices); // This array is filled by BFS and to store path
         for(int i=0; i< numberOfVertices; i++) parent[i] = NULL;
     }
     void addIntraEdge(int u)
     {   
-
         intraEdges[u] = {u, u, CAPACITY, 0}; 
     }
     void addEdge(int u, int v)
@@ -107,7 +106,9 @@ public:
             {
                 parentEdge = parent[v];
                 path_flow = min(path_flow, rCap(parentEdge));
-
+                if(v != sink)
+                    path_flow = min(path_flow, rCap(&intraEdges[v]));
+                cout <<"Path Flow: " << path_flow << " Parent: " << rCap(parentEdge) << " Intra: " << rCap(&intraEdges[v]) << " V: " << v << endl;
             }
 
             // update residual capacities of the edges and reverse edges
@@ -116,6 +117,9 @@ public:
             {
                 parentEdge = parent[v];
                 parentEdge->flux += path_flow;
+                if (v!= sink)
+                    intraEdges[v].flux += path_flow;
+
                 for (auto invEdge : adjacencyList[v]) 
                     if (invEdge.v == parentEdge->u){
                         invEdge.flux -= path_flow;
@@ -125,6 +129,7 @@ public:
 
             // Add path flow to overall flow
             max_flow += path_flow;
+            //break;
         }
 
         // Return the overall flow
@@ -178,6 +183,7 @@ void processInput()
     }
     graph.setSource(0);
     graph.setSink(M * N + 1);
+    //graph.addIntraEdge(M*N+1, )
     cout << graph.fordFulkerson() << endl;
 }
 
