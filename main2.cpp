@@ -39,12 +39,6 @@ public:
     {        
         adjacencyList[u].clear();
     }
-    void setMarkets(int m) {
-        markets = m;
-    }
-    void setHouses(int h) {
-        houses = h;
-    }
     void setSource(int s)
     {
         source = s;
@@ -53,7 +47,12 @@ public:
     {
         sink = s;
     }
-    bool bfs(int rGraph[V][V], int parent[])
+
+    int rCap(Edge edge){
+        return edge.cap - edge.flux;
+    }
+
+    bool bfs(Edge** parent)
     {
         // Create a visited array and mark all vertices as not visited
         bool visited[numberOfVertices];
@@ -64,19 +63,18 @@ public:
         queue<int> q;
         q.push(source);
         visited[source] = true;
-        parent[source] = -1;
+        parent[source] = NULL;
 
         // Standard BFS Loop
         while (!q.empty())
         {
             int current = q.front();
             q.pop();
-
-            for (auto &edge : adjacencyList[current]) {
-
-                if (visited[edge.v] == false) {
+            for (auto &edge : adjacencyList[current]) {           
+                if ((visited[edge.v] == false) && (rCap(edge) > 0)) {
                     q.push(edge.v);
-                    parent[edge.v] = current;
+                    cout << edge.v<< endl;
+                    parent[edge.v] = &edge;
                     visited[edge.v] = true;
                 }
             }
@@ -87,42 +85,42 @@ public:
         return (visited[sink] == true);
     }
     int fordFulkerson() {
-        int u, v;
+        int v;
+        Edge parentEdge;
 
         // Create a residual graph and fill the residual graph with
         // given capacities in the original graph as residual capacities
         // in residual graph
-        int rGraph[][V]; // Residual graph where rGraph[i][j] indicates
-                          // residual capacity of edge from i to j (if there
-                          // is an edge. If rGraph[i][j] is 0, then there is not)
-        for (u = 0; u < V; u++)
-            for (v = 0; v < V; v++)
-                rGraph[u][v] = graph[u][v];
 
-        int parent[numberOfVertices]; // This array is filled by BFS and to store path
+        Edge* parent[numberOfVertices]; // This array is filled by BFS and to store path
 
         int max_flow = 0; // There is no flow initially
 
         // Augment the flow while tere is path from source to sink
-        while (bfs(rGraph, parent))
+        while (bfs(parent))
         {
             // Find minimum residual capacity of the edges along the
             // path filled by BFS. Or we can say find the maximum flow
             // through the path found.
+
             int path_flow = INT_MAX;
-            for (v = sink; v != source; v = parent[v])
+            for (v = sink; v != source; v = parent[v]->u)
             {
-                u = parent[v];
-                path_flow = min(path_flow, rGraph[u][v]);
+                parentEdge = *parent[v];
+                path_flow = min(path_flow, rCap(parentEdge));
             }
 
             // update residual capacities of the edges and reverse edges
             // along the path
-            for (v = sink; v != source; v = parent[v])
+            for (v = sink; v != source; v = parent[v]->u)
             {
-                u = parent[v];
-                rGraph[u][v] -= path_flow;
-                rGraph[v][u] += path_flow;
+                parentEdge = *parent[v];
+                parentEdge.flux -= path_flow;
+                for (auto invEdge : adjacencyList[v]) 
+                    if (invEdge.v == parentEdge.u){
+                        invEdge.flux += path_flow;
+                        break;
+                    }
             }
 
             // Add path flow to overall flow
@@ -169,8 +167,7 @@ void processInput()
     for (int i = 0; i < S; i++)
     {
         if (scanf("%d %d", &x, &y) == 0) return;
-        graph.clearEdges(M * (y - 1) + x);
-       
+        graph.clearEdges(M * (y - 1) + x);       
         graph.addEdge(M * (y - 1) + x, M * N + 1); //supermercados apontam para o target
     }
     for (int i = 0; i < C; i++)
@@ -179,11 +176,9 @@ void processInput()
         graph.addEdge(0, M * (y - 1) + x); //source aponta para as casas 
     }
 
-    graph.setHouses(C);
-    graph.setMarkets(S);
     graph.setSource(0);
     graph.setSink(M * N + 1);
-    cout << graph.maxMatches() << endl;
+    cout << graph.fordFulkerson() << endl;
 }
 
 int main() {
