@@ -61,20 +61,17 @@ public:
 
             int current = bfsQueue.front();
             bfsQueue.pop_front();
-            //parentEdges[current] = 0;
-            cout << "current: " << current << endl;
+
             for (auto &edge : adjacencyList[current])
             {
                 if ((edge.v != sink) && (parentEdges[edge.v] != NULL)) continue; //prevent it from going backwards
 
-                printf("Parent of %d is %d\n", edge.v, edge.u);
+                //printf("Parent of %d is %d\n", edge.v, edge.u);
                 parentEdges[edge.v] = &edge;
                 bfsQueue.push_back(edge.v);
 
                 if (edge.v == sink)
-                {   
-                    
-                    printf("encontrou saida : %d\n", edge.v);
+                { 
 
                     // A path was found from source to sink
                     // Find the maximum flow on this path
@@ -83,19 +80,37 @@ public:
                     while (parentEdge != nullptr)
                     {
                         maxFlow = min(maxFlow, parentEdge->cap - parentEdge->flux);
+                        
                         //maxFlow = min(maxFlow, intraEdges[edge.u].cap - intraEdges[edge.u].flux);
+                        
                         parentEdge = parentEdges[parentEdge->u];
                         //printf("\n%d", parentEdge->u);
                     }
-
+                    cout << "maxFlow: " << maxFlow << endl;
                     maximumFlow += maxFlow;
+                    cout << "maximumFlow: " << maximumFlow << endl;
 
                     // Augment the entire path
                     parentEdge = parentEdges[edge.v];
                     while (parentEdge != nullptr)
                     {
-                        //intraEdges[edge.u].flux += maxFlow;
+
                         parentEdge->flux += maxFlow;
+                        cout << parentEdge->u << " -> " << parentEdge->v << endl;
+                        //cout << "finding..." << endl;
+                        for (auto &invEdge : adjacencyList[parentEdge->v]){
+                            //cout << "edge found from " << invEdge.u << " -> " << invEdge.v << endl;
+
+                            if (invEdge.v == parentEdge->u) {
+                                invEdge.flux = -parentEdge->flux;
+                                cout << invEdge.u << " <- " << invEdge.v << endl;                                
+                                //break;
+                            }
+
+                        }
+                            
+                        
+
                         parentEdge = parentEdges[parentEdge->u];
                     }
                 }
@@ -124,7 +139,7 @@ void processInput()
 
     for (int i = 1; i < M * N + 1; i++)
     {
-        graph.addIntraEdge(i);
+        //graph.addIntraEdge(i);
         //right
         if (i % M != 0){
             graph.addEdge(i, i + 1);
@@ -140,14 +155,15 @@ void processInput()
     for (int i = 0; i < S; i++)
     {
         if (scanf("%d %d", &x, &y) == 0) return;
-        graph.clearEdges(M * (y - 1) + x);
-       
+        //graph.clearEdges(M * (y - 1) + x);       
         graph.addEdge(M * (y - 1) + x, M * N + 1); //supermercados apontam para o target
+        //graph.addEdge(M * N + 1, M * (y - 1) + x); //target aponta para supermercados
     }
     for (int i = 0; i < C; i++)
     {
         if (scanf("%d %d", &x, &y) == 0) return;
         graph.addEdge(0, M * (y - 1) + x); //source aponta para as casas 
+        //graph.addEdge(M * (y - 1) + x, 0); //source aponta para as casas 
     }
 
     graph.setSource(0);
