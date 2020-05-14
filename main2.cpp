@@ -6,6 +6,8 @@
 #include <queue>
 #include <limits>
 #define CAPACITY 1
+#define in(a) (a*2-1)
+#define out(a) (a*2)
 
 using namespace std;
 
@@ -15,6 +17,7 @@ struct Edge
     int v;      // Destination
     int cap;
     int flux;   // Current flux
+    Edge* inverse;
 };
 
 class Graph {
@@ -22,22 +25,47 @@ public:
     Graph(int V)
     {
         numberOfVertices = V;
-        intraEdges = (Edge*)malloc(sizeof(Edge)*numberOfVertices);
-        adjacencyList.resize(V);
-        parent = (Edge**)malloc(sizeof(Edge*)*numberOfVertices); // This array is filled by BFS and to store path
+        intraEdges = (Edge*)malloc(sizeof(Edge)*numberOfVertices*2);
+        adjacencyList.resize(numberOfVertices*2);
+        parent = (Edge**)malloc(sizeof(Edge*)*numberOfVertices*2); // This array is filled by BFS and to store path
         for(int i=0; i< numberOfVertices; i++) parent[i] = NULL;
     }
     void addIntraEdge(int u)
     {   
-        intraEdges[u] = {u, u, CAPACITY, 0}; 
+        Edge *edge1 = (Edge*)malloc(sizeof(Edge));
+        Edge *edge2 = (Edge*)malloc(sizeof(Edge));
+        
+        *edge1 = {in(u),out(u), CAPACITY, 0, NULL};
+        *edge2 = {out(u),in(u), CAPACITY, 0, edge1};
+        edge1->inverse = edge2;
+
+        adjacencyList[in(u)].push_back(*edge1);
+        adjacencyList[out(u)].push_back(*edge2);
     }
     void addEdge(int u, int v)
-    {        
-        adjacencyList[u].push_back({u, v, CAPACITY, 0});
+    {                
+        adjacencyList[out(u)].push_back({out(u),in(v), CAPACITY, 0, NULL});
+    }
+    void addEdgeInv(int u, int v)
+    {            
+
+        Edge *edge1 = (Edge*)malloc(sizeof(Edge));    
+        Edge *edge2 = (Edge*)malloc(sizeof(Edge));
+
+        *edge1 = {out(u),in(v), CAPACITY, 0, NULL};
+        *edge2 = {out(u),in(v), CAPACITY, 0, edge1};
+        edge1->inverse = edge2;
+
+        adjacencyList[out(u)].push_back(*edge1);
+        adjacencyList[out(u)].push_back(*edge2);        
+    }
+    bool isEmpty(int u){
+        return adjacencyList[out(u)].empty();
+
     }
     void clearEdges(int u)
     {        
-        adjacencyList[u].clear();
+        adjacencyList[out(u)].clear();
     }
     void setSource(int s)
     {
@@ -70,10 +98,11 @@ public:
         {
             int current = q.front();
             q.pop();
-            for (auto &edge : adjacencyList[current]) {          
+            for (auto &edge : adjacencyList[current]) {
                 if ((visited[edge.v] == false) && (rCap(&edge) > 0)) {
+                    cout << edge.u << " -> " << edge.v << endl;
                     q.push(edge.v);
-                    parent[edge.v] = &edge;                    
+                    parent[edge.v] = &edge;
                     visited[edge.v] = true;
                 }
             }
@@ -106,9 +135,11 @@ public:
             {
                 parentEdge = parent[v];
                 path_flow = min(path_flow, rCap(parentEdge));
-                if(v != sink)
-                    path_flow = min(path_flow, rCap(&intraEdges[v]));
-                cout <<"Path Flow: " << path_flow << " Parent: " << rCap(parentEdge) << " Intra: " << rCap(&intraEdges[v]) << " V: " << v << endl;
+                
+                if(v != sink && parentEdge->u != source) //?
+                    min(path_flow, rCap(parentEdge->inverse)); //?
+
+                //cout <<"Path Flow: " << path_flow << " Parent: " << rCap(parentEdge) << " V: " << v << endl;
             }
 
             // update residual capacities of the edges and reverse edges
@@ -117,14 +148,10 @@ public:
             {
                 parentEdge = parent[v];
                 parentEdge->flux += path_flow;
-                if (v!= sink)
-                    intraEdges[v].flux += path_flow;
 
-                for (auto invEdge : adjacencyList[v]) 
-                    if (invEdge.v == parentEdge->u){
-                        invEdge.flux -= path_flow;
-                        break;
-                    }
+                if(v != sink && parentEdge->u != source)
+                    parentEdge->inverse->flux -= path_flow;
+                
             }
 
             // Add path flow to overall flow
@@ -154,36 +181,39 @@ void processInput()
         return;
 
     Graph graph((M * N)*2 + 2);
-    
-    for (int i = 1; i < M * N + 1; i++)
-    {
-        graph.addIntraEdge(i);
-        //right
-        if (i % M != 0){
-            graph.addEdge(i, i + 1);
-            graph.addEdge(i + 1, i);
-        }
-
-        //under
-        if (i < M * (N - 1)){
-            graph.addEdge(i, i + M);
-            graph.addEdge(i + M, i);
-        }
-    }
+        
     for (int i = 0; i < S; i++)
     {
         if (scanf("%d %d", &x, &y) == 0) return;
-        graph.clearEdges(M * (y - 1) + x);       
+        //graph.clearEdges(M * (y - 1) + x);       
         graph.addEdge(M * (y - 1) + x, M * N + 1); //supermercados apontam para o target
     }
     for (int i = 0; i < C; i++)
     {
         if (scanf("%d %d", &x, &y) == 0) return;
         graph.addEdge(0, M * (y - 1) + x); //source aponta para as casas 
+
     }
+
+    for (int i = 1; i < M * N + 1; i++)
+    {
+        //right
+        if (!graph.isEmpty(i)) continue;
+
+        if (i % M != 0){
+            graph.addEdgeInv(i, i + 1);
+        }
+
+        //under
+        if (i < M * (N - 1)){
+            graph.addEdgeInv(i, i + M);
+        }
+    }
+
+    for(int i = 1; i < M * N + 1; i++) graph.addIntraEdge(i);
+
     graph.setSource(0);
-    graph.setSink(M * N + 1);
-    //graph.addIntraEdge(M*N+1, )
+    graph.setSink((M * N) * 2 + 1);
     cout << graph.fordFulkerson() << endl;
 }
 
