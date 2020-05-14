@@ -36,7 +36,7 @@ public:
         Edge *edge2 = (Edge*)malloc(sizeof(Edge));
         
         *edge1 = {in(u),out(u), CAPACITY, 0, NULL};
-        *edge2 = {out(u),in(u), CAPACITY, 0, edge1};
+        *edge2 = {out(u),in(u), CAPACITY, 1, edge1};
         edge1->inverse = edge2;
 
         adjacencyList[in(u)].push_back(*edge1);
@@ -53,11 +53,11 @@ public:
         Edge *edge2 = (Edge*)malloc(sizeof(Edge));
 
         *edge1 = {out(u),in(v), CAPACITY, 0, NULL};
-        *edge2 = {out(u),in(v), CAPACITY, 0, edge1};
+        *edge2 = {out(v),in(u), CAPACITY, 1, edge1};
         edge1->inverse = edge2;
 
         adjacencyList[out(u)].push_back(*edge1);
-        adjacencyList[out(u)].push_back(*edge2);        
+        adjacencyList[out(v)].push_back(*edge2);        
     }
     bool isEmpty(int u){
         return adjacencyList[out(u)].empty();
@@ -99,6 +99,7 @@ public:
             int current = q.front();
             q.pop();
             for (auto &edge : adjacencyList[current]) {
+                cout << edge.u << " - > " << edge.v << " Cap: " << rCap(&edge) << endl;
                 if ((visited[edge.v] == false) && (rCap(&edge) > 0)) {
                     cout << edge.u << " -> " << edge.v << endl;
                     q.push(edge.v);
@@ -107,6 +108,8 @@ public:
                 }
             }
         }
+
+        //cout << parent[234234];
 
 
         // If we reached sink in BFS starting from source, then return
@@ -135,7 +138,7 @@ public:
             {
                 parentEdge = parent[v];
                 path_flow = min(path_flow, rCap(parentEdge));
-                
+
                 if(v != sink && parentEdge->u != source) //?
                     min(path_flow, rCap(parentEdge->inverse)); //?
 
