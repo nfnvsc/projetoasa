@@ -41,12 +41,14 @@ public:
         *edge2 = {out(u),in(u), 0, edge1};
         edge1->inverse = edge2;
 
-        adjacencyList[in(u)].push_back(*edge1);
-        adjacencyList[out(u)].push_back(*edge2);
+        adjacencyList[in(u)].push_back(edge1);
+        adjacencyList[out(u)].push_back(edge2);
     }
     void addEdge(int u, int v)
     {                
-        adjacencyList[out(u)].push_back({out(u),in(v), CAPACITY, NULL});
+        Edge *edge = (Edge*)malloc(sizeof(Edge));    
+        *edge = {out(u),in(v), CAPACITY, NULL};
+        adjacencyList[out(u)].push_back(edge);
     }
     void addEdgeInv(int u, int v)
     {            
@@ -58,12 +60,14 @@ public:
         *edge2 = {in(v),out(u), 0, edge1};
         edge1->inverse = edge2;
 
-        adjacencyList[out(u)].push_back(*edge1);
-        adjacencyList[in(v)].push_back(*edge2);        
+        //edge2->inverse->cap += 123456789;
+
+        adjacencyList[out(u)].push_back(edge1);
+        adjacencyList[in(v)].push_back(edge2);        
     }
     bool isMarket(int u){
         for(auto &edge : adjacencyList[out(u)])
-            if(edge.v == sink)
+            if(edge->v == sink)
                 return true;
 
         return false;
@@ -106,12 +110,12 @@ public:
             int current = q.front();
             q.pop();
             for (auto &edge : adjacencyList[current]) {
-                if (edge.u != NULL) cout << "checking edge: " << edge.u <<"->"<<edge.v << " " << edge.cap << " ";
-                if ((visited[edge.v] == false) && (edge.cap > 0)) {
+                if (edge->u != NULL) cout << "checking edge: " << edge->u <<"->"<<edge->v << " " << edge->cap << " ";
+                if ((visited[edge->v] == false) && (edge->cap > 0)) {
                     cout << "entrou";
-                    q.push(edge.v);
-                    parent[edge.v] = &edge;
-                    visited[edge.v] = true;
+                    q.push(edge->v);
+                    parent[edge->v] = edge;
+                    visited[edge->v] = true;
                     //if (edge.v == sink) break;
                 }
                 cout << endl;
@@ -160,10 +164,25 @@ public:
             {
                 //cout << v << " <- ";
                 parentEdge = parent[v];
-                parentEdge->cap -= path_flow;
+                parentEdge->cap -= 1;
                 if(parentEdge->inverse != NULL){
                     cout << "augmenting " << parentEdge->inverse->u << "->" << parentEdge->inverse->v << endl;
-                    parentEdge->inverse->cap += path_flow;
+
+                    cout << "prevcap: " << parentEdge->inverse->cap << endl;
+                    parentEdge->inverse->cap += 1;
+                    cout << "nextcap: " << parentEdge->inverse->cap << endl;
+
+                    if (parentEdge->inverse->u == 11 && parentEdge->inverse->v == 10) {
+                        cout << parentEdge->inverse << endl;
+
+                        for (auto &edge : adjacencyList[11]){                        
+                            cout << edge->u << " ->>>>>> " << edge->v << "cap: " << edge->cap << endl;
+                            cout << edge<< endl;
+                        }
+
+                    }
+
+                    
                 }
                 
             }
@@ -171,13 +190,25 @@ public:
             max_flow += path_flow;
             //break;
         }
+        for (int i = 0; i < numberOfVertices; i++){
+            for(auto edge : adjacencyList[i]){
+                cout << "new" << endl;
+                cout << "cap: " << edge->u << " -> " << edge->v << " " << edge->cap << endl;
+                cout << "capInv: " << edge->v<<  " -> "<< edge->u << "  " <<   edge->inverse->cap << endl;
+                
+
+            }
+            
+        }
 
         // Return the overall flow
         return max_flow;
+
+        
     }
 
 private:
-    vector<list<Edge>> adjacencyList;
+    vector<list<Edge*>> adjacencyList;
     Edge* intraEdges;
     Edge** parent;
     int numberOfVertices;
